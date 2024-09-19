@@ -4,17 +4,18 @@ const app = express();
 app.set("view engine", "pug")
 
 const myLogger = (req, res, next) => {
-    console.log("L");
+    console.log("LOGGED");
     next()
 }
+
+app.use(myLogger);
 
 const requestTime = (req, res, next) => {
     req.requestTime = Date.now()
     next()
 }
 
-app.use(requestTime)
-app.use(myLogger)
+app.use(requestTime);
 
 app.use("/static", express.static(__dirname + "/public"))
 
@@ -24,8 +25,11 @@ app.use((err, req, res, next) => {
 })
 
 app.get("/", (req, res) => {
-    res.render("main")
-})
+    res.render("index", {
+        title: "Hey",
+        message: "Hello there!",
+    });
+});    
 
 app.get("/faq", (req, res) =>  {
     res.render("faq", { age: "15 лет" })
