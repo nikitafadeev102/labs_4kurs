@@ -40,13 +40,19 @@ app.post("/api/users", (req, res) => {
     
       const data = fs.readFileSync("users.json", "utf8");
       const users = JSON.parse(data);
-    const validateUser = (user) => {
-        const nameRegex = /^[a-zA-Zа-яА-ЯёЁ\s]+$/;
+    const validateUserData = (user) => {
+        const nameRegex = /^[A-Za-z\s]+$/; // Имя пользователя: только буквы и пробелы
+        const ageRegex = /^[1-9]\d*$/; // Возраст: положительное число
+        const idRegex = /^\d+$/; // ID пользователя: только цифры
+    
         if (!nameRegex.test(user.name)) {
-            throw new Error('Имя пользователя должно содержать только буквы и пробелы');
+            throw new Error('Имя пользователя должно содержать только буквы и пробелы.');
         }
-        if (typeof user.age !== 'number' || user.age <= 0) {
-            throw new Error('Возраст должен быть положительным числом');
+        if (!ageRegex.test(user.age)) {
+            throw new Error('Возраст должен быть положительным числом.');
+        }
+        if (!idRegex.test(user.id)) {
+            throw new Error('ID пользователя должен быть числом.');
         }
     };
     
@@ -101,144 +107,56 @@ app.delete("/api/users/:id", (req, res) => {
       }
     });
 
-app.put("/api/users", (req, res) => {
-      const { name, age, id } = req.body;
-    
-      if (name == null || age == null || id == null) {
-        res.status(404).json({ success: false, message: "Данные не заполнены" });
-      }
-    
-      const data = fs.readFileSync("users.json", "utf8");
-      const users = JSON.parse(data);
-    
-      let user;
-    
-      for (let i = 0; i < users.length; i++) {
-        if (users[i].id == id) {
-          user = users[i];
-          break;
-        }
-      }
-    
-      if (user) {
-        user.age = age;
-        user.name = name;
-    
-        const newData = JSON.stringify(users);
-    
-        fs.writeFileSync("users.json", newData);
-    
-        res.json({ success: true, message: user });
-      } else {
-        res.status(404).json({ success: false, message: "Ошибка записи" });
-      }
-    });
+    const fs = require('fs').promises;
 
-    app.put('/api/users/:id', async (req, res) => {
+    // Чтение файла
+    const readFileAsync = async (file) => {
         try {
-            const userId = parseInt(req.params.id);
-            validateUser(req.body);
-            const users = JSON.parse(await fs.readFile(userFilePath, 'utf-8'));
-            const userIndex = users.findIndex(user => user.id === userId);
-            
-            if (userIndex === -1) {
-                return res.status(404).json({ error: 'Пользователь не найден.' });
-            }
-            
-            users[userIndex] = { ...users[userIndex], ...req.body };
-            await fs.writeFile(userFilePath, JSON.stringify(users, null, 2));
-            res.status(200).json(users[userIndex]);
-        } catch (err) {
-            res.status(400).json({ error: err.message });
+            const data = await fs.readFile(file, 'utf8');
+            return JSON.parse(data);
+        } catch (error) {
+            console.error('Ошибка чтения файла:', error);
         }
-    });
+    };
     
-    app.post('/api/users', async (req, res) => {
+    // Запись в файл
+    const writeFileAsync = async (file, data) => {
         try {
-            validateUser(req.body);
-            const users = JSON.parse(await fs.readFile(userFilePath, 'utf-8'));
-            
-            // Проверка уникальности имени
-            const existingUser = users.find(user => user.name === req.body.name);
-            if (existingUser) {
-                return res.status(400).json({ error: 'Имя пользователя уже существует.' });
-            }
-            
-            users.push(req.body);
-            await fs.writeFile(userFilePath, JSON.stringify(users, null, 2));
-            res.status(201).json(req.body);
-        } catch (err) {
-            res.status(400).json({ error: err.message });
+            await fs.writeFile(file, JSON.stringify(data, null, 2));
+        } catch (error) {
+            console.error('Ошибка записи в файл:', error);
         }
-    });
+    };
+
+    const isUserNameUnique = (users, newUser) => {
+        return !users.some(user => user.name === newUser.name);
+    };
+    
+    // Пример использования
+    if (!isUserNameUnique(users, newUser)) {
+        throw new Error('Имя пользователя уже существует.');
+    }
 
     const logOperation = async (message) => {
-        const logMessage = [${new Date().toISOString()}] ${message}\n;
-        await fs.appendFile('./logs.txt', logMessage);
+        const logMessage = `${new Date().toISOString()} - ${message}\n`;
+        await fs.appendFile('logs.txt', logMessage);
     };
     
-    // Добавление пользователя с логом
-    app.post('/api/users', async (req, res) => {
-        try {
-            validateUser(req.body);
-            const users = JSON.parse(await fs.readFile(userFilePath, 'utf-8'));
-            
-            const existingUser = users.find(user => user.name === req.body.name);
-    if (existingUser) {
-                return res.status(400).json({ error: 'Имя пользователя уже существует.' });
-            }
-            
-            users.push(req.body);
-            await fs.writeFile(userFilePath, JSON.stringify(users, null, 2));
-            await logOperation(Добавлен пользователь: ${JSON.stringify(req.body)});
-            res.status(201).json(req.body);
-        } catch (err) {
-            res.status(400).json({ error: err.message });
-        }
-    });
+    // Пример логирования
+    await logOperation('Добавлен новый пользователь: ' + JSON.stringify(newUser));
 
     const createBackup = async () => {
-        await fs.copyFile(userFilePath, './users_backup.json');
+        try {
+            await fs.copyFile('users.json', 'users_backup.json');
+        } catch (error) {
+            console.error('Ошибка при создании резервной копии:', error);
+        }
     };
-    
-    // Обновление пользователя с резервной копией
-    app.put('/api/users/:id', async (req, res) => {
-        try {
-            const userId = parseInt(req.params.id);
-            validateUser(req.body);
-            const users = JSON.parse(await fs.readFile(userFilePath, 'utf-8'));
-            const userIndex = users.findIndex(user => user.id === userId);
-            
-            if (userIndex === -1) {
-                return res.status(404).json({ error: 'Пользователь не найден.' });
-            }
-            
-            await createBackup(); // Создаем резервную копию перед изменением
-            users[userIndex] = { ...users[userIndex], ...req.body };
-            await fs.writeFile(userFilePath, JSON.stringify(users, null, 2));
-            await logOperation(Обновлен пользователь: ${JSON.stringify(users[userIndex])});
-            res.status(200).json(users[userIndex]);
-        } catch (err) {
-            res.status(400).json({ error: err.message });
-        }
-    });
-    
-    app.get('/api/users', async (req, res) => {
-        try {
-            const users = JSON.parse(await fs.readFile(userFilePath, 'utf-8'));
-            let filteredUsers = users;
-    
-            if (req.query.name) {
-                filteredUsers = filteredUsers.filter(user => user.name.includes(req.query.name));
-            }
-            
-            if (req.query.age) {
-                filteredUsers = filteredUsers.filter(user => user.age === parseInt(req.query.age));
-            }
-    
-            res.status(200).json(filteredUsers);
-        } catch (err) {
-            res.status(500).json({ error: 'Ошибка при получении пользователей.' });
-        }
-    });
-    
+
+    const filterUsers = (users, name, age) => {
+        return users.filter(user => {
+            const nameMatches = name ? user.name.includes(name) : true;
+            const ageMatches = age ? user.age === age : true;
+            return nameMatches && ageMatches;
+        });
+    };
