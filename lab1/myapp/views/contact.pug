@@ -1,28 +1,154 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>#{title}</title>
-    <meta charset="utf-8" />
-</head>
-<body>
-    <h1>#{title} в Pug</h1>
-    if emailsVisible
-        <h3>Электронные адреса</h3>
-        <ul>
-            each email in emails
-                <li>#{email}</li>
-        </ul>
-    else
-        <h3>Электроннный адрес отсутствует</h3>
-    <p>Телефон: #{phone}</p>
-</body>
-<html>
+// файл: views/about.pug
+extends layout
 
-app.use("/contact", function (request, response) {
-    response.render("contact", {
-        title: "Мои контакты",
-        emailsVisible: true,
-        emails: ["gavgav@mycorp.com", "mioaw@mycorp.com"],
-        phone: "+1234567890",
-    });
-});
+block content
+  h1 Обо мне
+  .profile
+    img(src='/path/to/photo.jpg', alt='Моя фотография')
+    p Имя: John Doe
+    p Возраст: 28
+    p Род занятий: Веб-разработчик
+    p Хобби: Фотография, Программирование
+  h2 Мои интересы
+  ul
+    li Программирование
+    li Спорт
+    li Искусство
+  a(href='https://myportfolio.com') Мое портфолио
+
+  // файл: views/blog.pug
+extends layout
+
+block content
+  header
+    h1 Название блога
+    nav
+      ul
+        li: a(href='/') Главная
+        li: a(href='/articles') Статьи
+        li: a(href='/contact') Контакты
+
+  main
+    article
+      h2 Заголовок статьи
+      p Дата публикации: 01.01.2023
+      p Текст статьи...
+
+  aside
+    h3 Последние статьи
+    ul
+      li: a(href='/articles/post1') Заголовок статьи 1
+      li: a(href='/articles/post2') Заголовок статьи 2
+
+  footer
+    p &copy; 2023 Мой блог
+    p Контактная информация
+
+    // файл: views/todo.pug
+extends layout
+
+block content
+  h1 Список задач
+  form(action='/todo', method='POST')
+    input(type='text', name='task', placeholder='Новая задача')
+    button(type='submit') Добавить
+
+  ul
+    each task in tasks
+      li
+        | #{task.title}
+        button(type='button', onclick=`deleteTask(${task.id})`) Удалить
+        button(type='button', onclick=`markAsDone(${task.id})`) Выполнено
+
+// файл: views/contact.pug
+extends layout
+
+block content
+  h1 Обратная связь
+  if message
+    p.message #{message}
+  form(action='/contact', method='POST')
+    label(for='name') Имя:
+    input(type='text', name='name', required)
+
+    label(for='email') Email:
+    input(type='email', name='email', required)
+
+    label(for='subject') Тема сообщения:
+    input(type='text', name='subject', required)
+
+    label(for='message') Сообщение:
+    textarea(name='message', required)
+
+    div
+      label Для какого типа запроса:
+      input(type='radio', name='requestType', value='question', required) Вопрос
+      input(type='radio', name='requestType', value='feedback') Отзыв
+      input(type='radio', name='requestType', value='complaint') Жалоба
+
+    input(type='checkbox', name='subscribe') Подписаться на рассылку
+
+    button(type='submit') Отправить
+
+    // файл: views/layout.pug
+doctype html
+html
+  head
+    title Мой сайт
+    link(rel='stylesheet', href='/styles.css')
+  body
+    block header
+      header
+        h1 Мой сайт
+        nav
+          ul
+            li: a(href='/') Главная
+            li: a(href='/contact') Контакты
+
+    block content
+
+    block footer
+      footer
+        p &copy; 2023 Мой сайт
+
+// файл: views/index.pug
+extends layout
+
+block content
+  h2 Добро пожаловать на главную страницу!
+
+// файл: views/contact.pug
+extends layout
+
+block content
+  h2 Контактная информация
+
+  // файл: views/shop.pug
+extends layout
+
+block content
+  h1 Интернет-магазин
+  .product-grid
+    each product in products
+      .product-card
+        img(src=product.image, alt=product.name)
+        h3= product.name
+        p= product.description
+        p Цена: #{product.price} руб.
+        button(type='button') Купить
+
+// файл: views/index.pug
+extends layout
+
+block content
+  header
+    nav
+      ul.navbar
+        li: a(href='/') Главная
+        li: a(href='/about') Обо мне
+
+  main
+    h1 Адаптивная страница с использованием Pug и Bootstrap
+
+  footer
+    p &copy; 2023 Мой сайт
