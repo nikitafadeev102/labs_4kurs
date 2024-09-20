@@ -1,16 +1,18 @@
 {
-  "name": "laba1",
+  "name": "myapp",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js"
   },
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "express": "^4.19.2",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.21.0",
     "pug": "^3.0.3"
   },
   "devDependencies": {
